@@ -5,7 +5,7 @@ import os
 # ==========================================
 # PDF FILE PATH
 # ==========================================
-pdf_location = r"C:\Users\Hello\Downloads\sample-tables.pdf"
+pdf_location = r"C:\Users\Hello\Downloads\sbi.pdf"
 
 # ==========================================
 # OUTPUT FOLDER FOR CSV FILES
