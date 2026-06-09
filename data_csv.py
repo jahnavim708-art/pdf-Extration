@@ -1,67 +1,46 @@
 import pdfplumber
 import pandas as pd
-import os
 
-# ==========================================
-# PDF FILE PATH
-# ==========================================
-pdf_location = r"C:\Users\Hello\Downloads\sbi.pdf"
+pdf_path = r"C:\Users\Hello\Downloads\table.pdf"
+output_csv = "table.csv"
 
-# ==========================================
-# OUTPUT FOLDER FOR CSV FILES
-# ==========================================
-output_folder = os.path.join(
-    os.path.dirname(pdf_location),
-    "pdf_tables"
-)
+all_rows = []
+header = None
 
-os.makedirs(output_folder, exist_ok=True)
+with pdfplumber.open(pdf_path) as pdf:
 
-# ==========================================
-# EXTRACT TABLES
-# ==========================================
-table_count = 1
-
-with pdfplumber.open(pdf_location) as pdf:
-
-    print(f"Total Pages: {len(pdf.pages)}")
-
-    for page_num, page in enumerate(pdf.pages, start=1):
-
-        print(f"\nProcessing Page {page_num}...")
+    for page in pdf.pages:
 
         tables = page.extract_tables()
-
-        if not tables:
-            print("No tables found on this page.")
-            continue
 
         for table in tables:
 
             if not table or len(table) < 2:
                 continue
 
-            try:
-                # First row as header
+            # Set header only once
+            if header is None:
                 header = table[0]
-                data = table[1:]
 
-                df = pd.DataFrame(data, columns=header)
+            rows = table[1:]
 
-                csv_filename = f"page_{page_num}_table_{table_count}.csv"
-                csv_path = os.path.join(output_folder, csv_filename)
+            for row in rows:
 
-                df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+                if not any(row):
+                    continue
 
-                print(f"Saved: {csv_filename}")
+                # fix row length mismatch
+                while len(row) < len(header):
+                    row.append("")
 
-                table_count += 1
+                all_rows.append(row[:len(header)])
 
-            except Exception as e:
-                print(f"Error processing table: {e}")
+if all_rows and header:
 
-print("\n===================================")
-print(f"Total Tables Extracted: {table_count - 1}")
-print(f"CSV Files Saved In: {output_folder}")
-print("Extraction Completed Successfully!")
-print("===================================")
+    df = pd.DataFrame(all_rows, columns=header)
+    df.to_csv(output_csv, index=False)
+
+    print(f"CSV created successfully: {output_csv}")
+
+else:
+    print("No table found in PDF")
